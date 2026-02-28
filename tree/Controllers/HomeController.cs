@@ -77,14 +77,14 @@ namespace EcoTraceApp.Controllers
             return View(joinedEvents);
         }
 
-        // --- NEW CHAT FUNCTIONALITY ---
+    
 
         [Authorize]
         public async Task<IActionResult> EventChat(int id)
         {
             var userId = _userManager.GetUserId(User);
 
-            // Verify if user is registered for this event or is an Admin
+            
             var hasJoined = await _context.EventRegistrations
                 .AnyAsync(r => r.EventId == id && r.UserId == userId);
 
@@ -97,7 +97,7 @@ namespace EcoTraceApp.Controllers
             var eventItem = await _context.Events.FindAsync(id);
             if (eventItem == null) return NotFound();
 
-            // Load message history
+            
             var messages = await _context.ChatMessages
                 .Include(c => c.User)
                 .Where(c => c.EventId == id)

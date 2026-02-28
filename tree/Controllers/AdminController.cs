@@ -27,7 +27,7 @@ namespace EcoTraceApp.Controllers
             return View(events);
         }
 
-        // NEW PHASE 2: Complete Mission Logic
+        
         [HttpPost]
         public async Task<IActionResult> CompleteEvent(int id, string impact)
         {

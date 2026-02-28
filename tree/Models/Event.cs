@@ -32,9 +32,8 @@ namespace EcoTraceApp.Models
         [Required]
         public int MaxVolunteers { get; set; }
 
-        // NEW PHASE 2 FIELDS
         public bool IsCompleted { get; set; } = false;
-        public string? ImpactSummary { get; set; } // e.g., "50 Trees Planted"
+        public string? ImpactSummary { get; set; } 
 
         [Required]
         public string CreatorId { get; set; } = string.Empty;

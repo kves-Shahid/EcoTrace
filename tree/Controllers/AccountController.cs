@@ -38,7 +38,7 @@ namespace EcoTraceApp.Controllers
 
         [HttpPost]
 
-        // WE ADDED 'string role' HERE
+        
 
         public async Task<IActionResult> Register(string email, string password, string role)
 
@@ -54,7 +54,6 @@ namespace EcoTraceApp.Controllers
 
             {
 
-                // WE NOW USE THE CHOSEN ROLE HERE
 
                 await _userManager.AddToRoleAsync(user, role);
 

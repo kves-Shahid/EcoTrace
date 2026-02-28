@@ -3,7 +3,6 @@
     ViewData["Title"] = "My Missions";
     var missionCount = Model.Count();
 
-    // Gamification Logic
     string rank = missionCount >= 5 ? "Eco Hero" : missionCount >= 3 ? "Forest Guardian" : missionCount >= 1 ? "Sapling" : "Seed";
     string rankColor = missionCount >= 5 ? "text-warning" : missionCount >= 3 ? "text-success" : "text-primary";
     double progress = Math.Min((missionCount / 5.0) * 100, 100);
@@ -25,7 +24,7 @@
             {
                 @foreach (var reg in Model)
                 {
-                    <div class="card border-0 shadow-sm mb-3 position-relative @(reg.Event.IsCompleted ? "border-start border-success border-4" : "")" style="border-radius: 15px;">
+                    <div class="card border-0 shadow-sm mb-3 position-relative @(reg.Event?.IsCompleted == true ? "border-start border-success border-4" : "")" style="border-radius: 15px;">
                         <div class="card-body d-flex align-items-center">
                             <div class="me-4 text-center bg-light p-3 rounded-3" style="min-width: 80px;">
                                 <div class="small fw-bold text-uppercase">@reg.Event?.EventDate.ToString("MMM")</div>
@@ -34,10 +33,10 @@
 
                             <div class="flex-grow-1">
                                 <h5 class="fw-bold mb-1">@reg.Event?.Title</h5>
-                                @if (reg.Event.IsCompleted)
+                                @if (reg.Event?.IsCompleted == true)
                                 {
                                     <span class="badge bg-success-subtle text-success small mb-2">
-                                        <i class="bi bi-patch-check-fill"></i> Impact: @reg.Event.ImpactSummary
+                                        <i class="bi bi-patch-check-fill"></i> Impact: @reg.Event?.ImpactSummary
                                     </span>
                                 }
                                 <p class="text-muted small mb-0"><i class="bi bi-geo-alt"></i> @reg.Event?.LocationName</p>
