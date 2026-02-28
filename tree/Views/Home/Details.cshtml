@@ -21,7 +21,6 @@
             <div class="card border-0 shadow-sm mb-4" style="border-radius: 20px; overflow: hidden;">
                 @if (!string.IsNullOrEmpty(Model.VideoUrl))
                 {
-                    @* FIX: Automatically converts standard YouTube links to Embed links *@
                     var embedUrl = Model.VideoUrl.Replace("watch?v=", "embed/").Split('&')[0];
                     <div class="ratio ratio-16x9">
                         <iframe src="@embedUrl" allowfullscreen></iframe>
@@ -57,11 +56,14 @@
 
                 @if (hasJoined)
                 {
-                    @* Muted Button for users who have already joined *@
-                    <button class="btn btn-secondary btn-lg w-100 fw-bold py-3 disabled" style="border-radius: 12px; cursor: not-allowed;">
+                    <button class="btn btn-secondary btn-lg w-100 fw-bold py-3 disabled mb-3" style="border-radius: 12px; cursor: not-allowed;">
                         <i class="bi bi-check-lg me-2"></i> Already Joined
                     </button>
-                    <p class="text-center text-success small mt-2 fw-bold">You are registered for this mission!</p>
+
+                    @* NEW: Enter Chat Room Button *@
+                    <a asp-action="EventChat" asp-route-id="@Model.Id" class="btn btn-success btn-lg w-100 fw-bold py-3 shadow-sm" style="border-radius: 12px;">
+                        <i class="bi bi-chat-text-fill me-2"></i> Open Community Chat
+                    </a>
                 }
                 else
                 {

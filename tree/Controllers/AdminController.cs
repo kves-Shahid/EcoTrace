@@ -4,7 +4,6 @@ using EcoTraceApp.Data;
 using EcoTraceApp.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
 
 namespace EcoTraceApp.Controllers
 {
@@ -22,11 +21,25 @@ namespace EcoTraceApp.Controllers
             _hostEnvironment = hostEnvironment;
         }
 
-        // Fixes the buffering/loading error by using ToListAsync
         public async Task<IActionResult> Dashboard()
         {
-            var events = await _context.Events.ToListAsync();
+            var events = await _context.Events.Include(e => e.Registrations).ToListAsync();
             return View(events);
+        }
+
+        // NEW PHASE 2: Complete Mission Logic
+        [HttpPost]
+        public async Task<IActionResult> CompleteEvent(int id, string impact)
+        {
+            var eventItem = await _context.Events.FindAsync(id);
+            if (eventItem != null)
+            {
+                eventItem.IsCompleted = true;
+                eventItem.ImpactSummary = impact;
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Mission Success! Impact results updated.";
+            }
+            return RedirectToAction("Dashboard");
         }
 
         [HttpGet]
@@ -51,29 +64,12 @@ namespace EcoTraceApp.Controllers
             return View(model);
         }
 
-        // NEW: Edit Event Logic
-        [HttpGet]
-        public async Task<IActionResult> EditEvent(int id)
+        public async Task<IActionResult> EventVolunteers(int id)
         {
-            var eventItem = await _context.Events.FindAsync(id);
-            if (eventItem == null) return NotFound();
+            var eventItem = await _context.Events
+                .Include(e => e.Registrations).ThenInclude(r => r.User)
+                .FirstOrDefaultAsync(e => e.Id == id);
             return View(eventItem);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> EditEvent(Event model, IFormFile? mediaFile)
-        {
-            ModelState.Remove("CreatorId");
-            ModelState.Remove("Creator");
-
-            if (ModelState.IsValid)
-            {
-                if (mediaFile != null) model.MediaFilePath = await SaveFile(mediaFile);
-                _context.Update(model);
-                await _context.SaveChangesAsync();
-                return RedirectToAction("Dashboard");
-            }
-            return View(model);
         }
 
         private async Task<string> SaveFile(IFormFile file)

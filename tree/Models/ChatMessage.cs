@@ -5,23 +5,24 @@ using Microsoft.AspNetCore.Identity;
 
 namespace EcoTraceApp.Models
 {
-    public class EventRegistration
+    public class ChatMessage
     {
         [Key]
         public int Id { get; set; }
 
         [Required]
         public int EventId { get; set; }
-
         [ForeignKey("EventId")]
         public virtual Event? Event { get; set; }
 
         [Required]
         public string UserId { get; set; } = string.Empty;
-
         [ForeignKey("UserId")]
         public virtual IdentityUser? User { get; set; }
 
-        public DateTime RegistrationDate { get; set; } = DateTime.Now;
+        [Required]
+        public string MessageText { get; set; } = string.Empty;
+
+        public DateTime Timestamp { get; set; } = DateTime.Now;
     }
 }

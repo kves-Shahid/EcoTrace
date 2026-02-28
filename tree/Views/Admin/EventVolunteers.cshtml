@@ -1,0 +1,50 @@
+﻿@model EcoTraceApp.Models.Event
+@{
+    ViewData["Title"] = "Volunteer Details";
+}
+
+<div class="container mt-4">
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Dashboard" class="btn btn-light me-3"><i class="bi bi-arrow-left"></i></a>
+        <h2 class="fw-bold m-0">Volunteers for: @Model.Title</h2>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+
+    <div class="card border-0 shadow-sm" style="border-radius: 15px;">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4 py-3">User Email</th>
+                        <th class="py-3">Joined On</th>
+                        <th class="py-3 text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var reg in Model.Registrations)
+                    {
+                        <tr>
+                            <td class="ps-4">@reg.User?.Email</td>
+                            <td>@reg.RegistrationDate.ToString("MMMM dd, yyyy")</td>
+                            <td class="text-end pe-4">
+                                <form asp-action="AssignRole" method="post" class="d-inline-flex align-items-center">
+                                    <input type="hidden" name="userId" value="@reg.UserId" />
+                                    <input type="hidden" name="eventId" value="@Model.Id" />
+                                    <select name="roleName" class="form-select form-select-sm me-2" style="width: auto;">
+                                        <option value="Admin">Admin</option>
+                                        <option value="User">User</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-primary btn-sm">Assign Role</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

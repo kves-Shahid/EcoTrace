@@ -1,27 +1,53 @@
 ﻿@{
+
     ViewData["Title"] = "Register";
+
 }
+
 <h2>Sign Up for EcoTrace</h2>
 
+
+
 <form asp-action="Register" method="post" class="mt-4">
+
     <div asp-validation-summary="All" class="text-danger"></div>
 
+
+
     <div class="mb-3">
+
         <label>Email</label>
+
         <input type="email" name="email" class="form-control" required />
-    </div>
-    <div class="mb-3">
-        <label>Password</label>
-        <input type="password" name="password" class="form-control" required />
+
     </div>
 
     <div class="mb-3">
-        <label>Account Type</label>
-        <select name="role" class="form-control" required>
-            <option value="User">Standard User</option>
-            <option value="Admin">Administrator</option>
-        </select>
+
+        <label>Password</label>
+
+        <input type="password" name="password" class="form-control" required />
+
     </div>
+
+
+
+    <div class="mb-3">
+
+        <label>Account Type</label>
+
+        <select name="role" class="form-control" required>
+
+            <option value="User">Standard User</option>
+
+            <option value="Admin">Administrator</option>
+
+        </select>
+
+    </div>
+
+
 
     <button type="submit" class="btn btn-success">Create Account</button>
+
 </form>

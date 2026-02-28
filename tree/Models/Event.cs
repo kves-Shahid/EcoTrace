@@ -32,15 +32,16 @@ namespace EcoTraceApp.Models
         [Required]
         public int MaxVolunteers { get; set; }
 
+        // NEW PHASE 2 FIELDS
+        public bool IsCompleted { get; set; } = false;
+        public string? ImpactSummary { get; set; } // e.g., "50 Trees Planted"
+
         [Required]
         public string CreatorId { get; set; } = string.Empty;
-
         [ForeignKey("CreatorId")]
         public virtual IdentityUser? Creator { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-        // Ensure this is virtual for lazy loading or included in queries
         public virtual ICollection<EventRegistration> Registrations { get; set; } = new List<EventRegistration>();
     }
 }
