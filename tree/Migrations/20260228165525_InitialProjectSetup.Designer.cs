@@ -4,6 +4,7 @@ using EcoTraceApp.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EcoTraceApp.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260228165525_InitialProjectSetup")]
+    partial class InitialProjectSetup
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -44,15 +47,14 @@ namespace EcoTraceApp.Migrations
                     b.Property<DateTime>("EventDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("EventType")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("double");
 
                     b.Property<string>("LocationName")
                         .HasColumnType("longtext");
 
-                    b.Property<string>("MapUrl")
-                        .HasColumnType("longtext");
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("double");
 
                     b.Property<int>("MaxVolunteers")
                         .HasColumnType("int");
@@ -62,10 +64,8 @@ namespace EcoTraceApp.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("VideoUrl")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
 
                     b.HasKey("Id");
 

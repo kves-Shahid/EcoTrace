@@ -1,0 +1,73 @@
+﻿@model EcoTraceApp.Models.Event
+@{
+    ViewData["Title"] = "Create Event";
+}
+
+<div class="container mt-4" style="max-width: 800px;">
+    <div class="card shadow-sm p-4">
+        <h2 class="mb-4">Create New Event</h2>
+
+        <form asp-action="CreateEvent" method="post" enctype="multipart/form-data">
+            <div class="row">
+                <div class="col-md-8 mb-3">
+                    <label class="form-label fw-bold">Event Title</label>
+                    <input asp-for="Title" class="form-control" placeholder="e.g. Biggest Tree Planting Fest" required />
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label fw-bold">Event Type</label>
+                    <select asp-for="EventType" class="form-select">
+                        <option value="Tree Planting">Tree Planting</option>
+                        <option value="Social Welfare">Social Welfare</option>
+                        <option value="Volunteer Drive">Volunteer Drive</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Description</label>
+                <textarea asp-for="Description" class="form-control" rows="4" placeholder="Tell people about the cause..."></textarea>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Date & Time</label>
+                    <input asp-for="EventDate" type="datetime-local" class="form-control" required />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Max Volunteers</label>
+                    <input asp-for="MaxVolunteers" type="number" class="form-control" value="50" />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Location Name</label>
+                <input asp-for="LocationName" class="form-control" placeholder="e.g. Westin, Dhaka" />
+            </div>
+
+            <hr />
+            <h5 class="mb-3">Media & Map Options</h5>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Upload Image/Poster</label>
+                    <input type="file" name="mediaFile" class="form-control" accept="image/*" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Video URL (YouTube/Vimeo)</label>
+                    <input asp-for="VideoUrl" class="form-control" placeholder="https://youtube.com/..." />
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">Map Embed Link (Iframe URL)</label>
+                <input asp-for="MapUrl" class="form-control" placeholder="Paste Google Maps Embed URL here" />
+                <small class="text-muted">Users will use this to track the event location.</small>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary btn-lg">Publish Event</button>
+                <a asp-action="Dashboard" class="btn btn-light">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>

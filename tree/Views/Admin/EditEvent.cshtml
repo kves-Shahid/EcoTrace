@@ -1,0 +1,32 @@
+﻿@model EcoTraceApp.Models.Event
+@{
+    ViewData["Title"] = "Edit Event";
+}
+
+<div class="container mt-4">
+    <div class="card shadow p-4">
+        <h2>Edit Event Criteria</h2>
+        <form asp-action="EditEvent" method="post" enctype="multipart/form-data">
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="CreatorId" />
+
+            <div class="mb-3">
+                <label class="fw-bold">Title</label>
+                <input asp-for="Title" class="form-control" />
+            </div>
+
+            <div class="mb-3">
+                <label class="fw-bold">Video URL (YouTube)</label>
+                <input asp-for="VideoUrl" class="form-control" placeholder="https://youtube.com/..." />
+            </div>
+
+            <div class="mb-3">
+                <label class="fw-bold">Update Image</label>
+                <input type="file" name="mediaFile" class="form-control" />
+            </div>
+
+            <button type="submit" class="btn btn-warning">Save Changes</button>
+            <a asp-action="Dashboard" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>

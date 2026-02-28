@@ -1,0 +1,78 @@
+﻿@model EcoTraceApp.Models.Event
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<IdentityUser> UserManager
+@{
+    ViewData["Title"] = Model.Title;
+    var userId = UserManager.GetUserId(User);
+    var hasJoined = Model.Registrations.Any(r => r.UserId == userId);
+}
+
+<div class="container mt-4">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 20px; overflow: hidden;">
+                @if (!string.IsNullOrEmpty(Model.VideoUrl))
+                {
+                    @* FIX: Automatically converts standard YouTube links to Embed links *@
+                    var embedUrl = Model.VideoUrl.Replace("watch?v=", "embed/").Split('&')[0];
+                    <div class="ratio ratio-16x9">
+                        <iframe src="@embedUrl" allowfullscreen></iframe>
+                    </div>
+                }
+                else if (!string.IsNullOrEmpty(Model.MediaFilePath))
+                {
+                    <img src="@Model.MediaFilePath" class="img-fluid w-100" style="max-height: 500px; object-fit: cover;" />
+                }
+            </div>
+
+            <h1 class="fw-bold mb-3">@Model.Title</h1>
+            <div class="d-flex align-items-center mb-4 text-muted">
+                <span class="badge bg-success me-3">@Model.EventType</span>
+                <span class="me-3"><i class="bi bi-calendar-event"></i> @Model.EventDate.ToString("MMMM dd, yyyy")</span>
+                <span><i class="bi bi-people"></i> @Model.Registrations.Count / @Model.MaxVolunteers Joined</span>
+            </div>
+
+            <h5 class="fw-bold">Mission Description</h5>
+            <p style="font-size: 1.1rem; line-height: 1.8;">@Model.Description</p>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 20px; background-color: #f8f9fa;">
+                <h5 class="fw-bold mb-3">Location Tracking</h5>
+                <div class="mb-3" style="height: 250px; border-radius: 15px; overflow: hidden;">
+                    @if (!string.IsNullOrEmpty(Model.MapUrl))
+                    {
+                        <iframe src="@Model.MapUrl" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                    }
+                </div>
+                <p class="mb-4 text-dark"><i class="bi bi-geo-alt-fill text-danger"></i> @Model.LocationName</p>
+
+                @if (hasJoined)
+                {
+                    @* Muted Button for users who have already joined *@
+                    <button class="btn btn-secondary btn-lg w-100 fw-bold py-3 disabled" style="border-radius: 12px; cursor: not-allowed;">
+                        <i class="bi bi-check-lg me-2"></i> Already Joined
+                    </button>
+                    <p class="text-center text-success small mt-2 fw-bold">You are registered for this mission!</p>
+                }
+                else
+                {
+                    <form asp-action="JoinEvent" method="post">
+                        <input type="hidden" name="eventId" value="@Model.Id" />
+                        <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold py-3" style="border-radius: 12px;">
+                            Join Event Now
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+</div>
