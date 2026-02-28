@@ -1,0 +1,17 @@
+﻿@{
+    ViewData["Title"] = "Login";
+}
+
+<h2>Login to EcoTrace</h2>
+
+<form asp-action="Login" method="post" class="mt-4">
+    <div class="form-group mb-3">
+        <label>Email Address</label>
+        <input type="email" name="email" class="form-control" placeholder="Enter email" required />
+    </div>
+    <div class="form-group mb-3">
+        <label>Password</label>
+        <input type="password" name="password" class="form-control" placeholder="Password" required />
+    </div>
+    <button type="submit" class="btn btn-primary">Login</button>
+</form>
