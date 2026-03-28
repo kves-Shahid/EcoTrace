@@ -1,0 +1,49 @@
+﻿@model List<EcoTraceApp.Controllers.VolunteerRank>
+@{
+    ViewData["Title"] = "Top Volunteers";
+}
+
+<div class="container mt-5">
+    <div class="text-center mb-5">
+        <h1 class="fw-bold text-success">Eco-Heroes</h1>
+        <p class="lead text-muted">Celebrating our community's biggest environmental impact.</p>
+    </div>
+
+    <div class="card border-0 shadow-lg mx-auto" style="max-width: 800px; border-radius: 20px;">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="ps-4 py-3">Rank</th>
+                            <th>Volunteer</th>
+                            <th>Missions</th>
+                            <th class="text-end pe-4">Eco-Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            int count = 1;
+                        }
+                        @foreach (var user in Model)
+                        {
+                            <tr class="@(count == 1 ? "table-warning bg-opacity-10" : "")">
+                                <td class="ps-4 fw-bold">
+                                    @if (count == 1)
+                                    {
+                                        <i class="bi bi-trophy-fill text-warning me-2"></i>
+                                    }
+                                    @count
+                                </td>
+                                <td class="fw-bold">@user.Email.Split('@')[0]</td>
+                                <td class="text-muted">@user.Missions Missions</td>
+                                <td class="text-end pe-4 fw-bold text-success">@user.Score</td>
+                            </tr>
+                            count++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

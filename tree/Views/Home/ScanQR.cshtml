@@ -1,0 +1,47 @@
+﻿@{
+    ViewData["Title"] = "Scan QR Code";
+}
+
+<div class="container mt-5 text-center">
+    <h2 class="fw-bold mb-3"><i class="bi bi-qr-code-scan text-success me-2"></i>Mission Check-In</h2>
+    <p class="text-muted mb-4">Point your camera at the QR code on the Event Organizer's screen to instantly check in and claim your points.</p>
+
+    <div class="card shadow-sm border-0 mx-auto" style="max-width: 500px; border-radius: 20px; overflow: hidden;">
+        <div class="card-body p-0 bg-dark">
+            <div id="reader" width="100%"></div>
+        </div>
+    </div>
+
+    <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4 mt-4">Cancel</a>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+<script>
+    function onScanSuccess(decodedText, decodedResult) {
+    
+        html5QrcodeScanner.clear();
+
+        
+        if(decodedText.includes('/Home/ProcessQRCheckIn')) {
+            
+            window.location.href = decodedText;
+        } else {
+            alert("Invalid QR Code. Please scan an official EcoTrace Check-In code.");
+            
+            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        }
+    }
+
+    function onScanFailure(error) {
+        
+    }
+
+    
+    let html5QrcodeScanner = new Html5QrcodeScanner(
+        "reader",
+        { fps: 10, qrbox: {width: 250, height: 250} },
+         false);
+
+    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+</script>

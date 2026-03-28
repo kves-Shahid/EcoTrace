@@ -4,13 +4,113 @@
 @{
     ViewData["Title"] = Model.Title;
     var userId = UserManager.GetUserId(User);
-    var hasJoined = Model.Registrations.Any(r => r.UserId == userId);
+
+    var userRegistration = Model.Registrations.FirstOrDefault(r => r.UserId == userId);
+    var hasJoined = userRegistration != null;
+    var isCheckedIn = userRegistration?.IsCheckedIn ?? false;
+    var isEventDay = Model.EventDate.Date <= DateTime.Now.Date;
+
+    double avgRating = Model.Comments != null && Model.Comments.Any() ? Model.Comments.Average(c => c.Rating) : 0;
+    int totalReviews = Model.Comments != null ? Model.Comments.Count : 0;
+
+    int capacityPercentage = Model.MaxVolunteers > 0 ? (int)Math.Round((double)Model.Registrations.Count / Model.MaxVolunteers * 100) : 0;
+    string pbColor = capacityPercentage > 80 ? "bg-danger" : (capacityPercentage > 50 ? "bg-warning" : "bg-success");
 }
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+
+<style>
+    .star-rating-form {
+        direction: rtl;
+        display: inline-flex;
+    }
+
+        .star-rating-form input[type="radio"] {
+            display: none;
+        }
+
+        .star-rating-form label {
+            color: #ddd;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: color 0.2s;
+            margin: 0 2px;
+        }
+
+        .star-rating-form input[type="radio"]:checked ~ label {
+            color: #ffc107;
+        }
+
+        .star-rating-form label:hover, .star-rating-form label:hover ~ label {
+            color: #ffca2c;
+        }
+
+    .avatar-stack {
+        display: flex;
+        padding-left: 10px;
+    }
+
+        .avatar-stack .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid white;
+            background-color: #0d6efd;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-left: -10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+    .timeline-feed {
+        border-left: 3px solid #198754;
+        padding-left: 15px;
+        margin-left: 10px;
+    }
+
+    .timeline-item {
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 0;
+            width: 15px;
+            height: 15px;
+            background: white;
+            border: 3px solid #198754;
+            border-radius: 50%;
+        }
+
+    @@keyframes pulse-yellow {
+        0% {
+            box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+        }
+
+        70% {
+            box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+        }
+    }
+
+    .animate-pulse {
+        animation: pulse-yellow 2s infinite;
+    }
+</style>
 
 <div class="container mt-4">
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
             <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
@@ -18,63 +118,392 @@
 
     <div class="row g-4">
         <div class="col-lg-8">
-            <div class="card border-0 shadow-sm mb-4" style="border-radius: 20px; overflow: hidden;">
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 20px; overflow: hidden; position: relative;">
                 @if (!string.IsNullOrEmpty(Model.VideoUrl))
                 {
                     var embedUrl = Model.VideoUrl.Replace("watch?v=", "embed/").Split('&')[0];
-                    <div class="ratio ratio-16x9">
-                        <iframe src="@embedUrl" allowfullscreen></iframe>
-                    </div>
+                    <div class="ratio ratio-16x9"><iframe src="@embedUrl" allowfullscreen></iframe></div>
                 }
                 else if (!string.IsNullOrEmpty(Model.MediaFilePath))
                 {
                     <img src="@Model.MediaFilePath" class="img-fluid w-100" style="max-height: 500px; object-fit: cover;" />
                 }
+
+                @if (!Model.IsCompleted && Model.EventDate > DateTime.Now)
+                {
+                    <div class="position-absolute top-0 end-0 m-3 bg-dark text-white px-3 py-2 rounded-pill shadow" style="opacity: 0.9;">
+                        <i class="bi bi-clock-history text-warning me-1"></i>
+                        <span id="countdownTimer" data-date="@Model.EventDate.ToString("yyyy-MM-ddTHH:mm:ss")" class="fw-bold">Calculating...</span>
+                    </div>
+                }
             </div>
 
-            <h1 class="fw-bold mb-3">@Model.Title</h1>
-            <div class="d-flex align-items-center mb-4 text-muted">
-                <span class="badge bg-success me-3">@Model.EventType</span>
-                <span class="me-3"><i class="bi bi-calendar-event"></i> @Model.EventDate.ToString("MMMM dd, yyyy")</span>
-                <span><i class="bi bi-people"></i> @Model.Registrations.Count / @Model.MaxVolunteers Joined</span>
+            <div class="d-flex justify-content-between align-items-start">
+                <h1 class="fw-bold mb-3">@Model.Title</h1>
+                <div class="text-warning fs-4" title="@avgRating.ToString("0.0") stars">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        <i class="bi @(i <= Math.Round(avgRating) ? "bi-star-fill" : "bi-star")"></i>
+                    }
+                    <span class="text-muted fs-6 ms-2">(@totalReviews)</span>
+                </div>
             </div>
+
+            <div class="d-flex align-items-center mb-4 text-muted">
+                <span class="badge bg-success me-3 fs-6 px-3 py-2">@Model.EventType</span>
+                <span class="me-3 fs-5"><i class="bi bi-calendar-event"></i> @Model.EventDate.ToString("MMMM dd, yyyy - h:mm tt")</span>
+            </div>
+
+            @if (Model.Announcements.Any() || User.IsInRole("Admin"))
+            {
+                <div class="card bg-light border-0 shadow-sm p-4 mb-4" style="border-radius: 15px;">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-megaphone-fill text-danger me-2"></i> Official Updates</h5>
+
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <form asp-controller="Admin" asp-action="AddAnnouncement" method="post" class="mb-4">
+                            <input type="hidden" name="eventId" value="@Model.Id" />
+                            <div class="input-group shadow-sm">
+                                <input type="text" name="message" class="form-control" placeholder="Broadcast a new update..." required />
+                                <button class="btn btn-danger fw-bold" type="submit">Post</button>
+                            </div>
+                        </form>
+                    }
+
+                    <div class="timeline-feed">
+                        @foreach (var ann in Model.Announcements.OrderByDescending(a => a.CreatedAt))
+                        {
+                            <div class="timeline-item">
+                                <p class="mb-1 text-dark fw-bold">@ann.Message</p>
+                                <small class="text-muted"><i class="bi bi-clock"></i> @ann.CreatedAt.ToString("MMM dd, h:mm tt")</small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
 
             <h5 class="fw-bold">Mission Description</h5>
             <p style="font-size: 1.1rem; line-height: 1.8;">@Model.Description</p>
+
+            <hr class="my-5" />
+
+            @if (Model.IsCompleted)
+            {
+                <h4 class="fw-bold mb-3"><i class="bi bi-images text-primary"></i> Mission Gallery</h4>
+                <div class="row g-2 mb-4">
+                    @foreach (var img in Model.GalleryImages)
+                    {
+                        <div class="col-md-4"><img src="@img.ImagePath" class="img-fluid rounded shadow-sm w-100" style="height: 200px; object-fit: cover;" /></div>
+                    }
+                </div>
+                @if (User.IsInRole("Admin"))
+                {
+                    <div class="card bg-light border-0 shadow-sm p-3 mb-5 rounded">
+                        <form asp-controller="Admin" asp-action="UploadGalleryImages" method="post" enctype="multipart/form-data">
+                            <input type="hidden" name="eventId" value="@Model.Id" />
+                            <label class="fw-bold mb-2">Upload Gallery Photos</label>
+                            <div class="input-group">
+                                <input type="file" name="galleryFiles" class="form-control" multiple accept="image/*" required />
+                                <button class="btn btn-primary" type="submit">Upload</button>
+                            </div>
+                        </form>
+                    </div>
+                }
+                <hr class="my-5" />
+            }
+
+            <h4 class="fw-bold mb-4">Community Reviews</h4>
+            @if (User.Identity.IsAuthenticated && !User.IsInRole("Admin"))
+            {
+                <div class="card shadow-sm border-0 mb-5 p-4" style="border-radius: 15px; background-color: #f8f9fa;">
+                    <form asp-action="AddComment" method="post">
+                        <input type="hidden" name="eventId" value="@Model.Id" />
+                        <h6 class="fw-bold mb-1">Rate this Mission</h6>
+                        <div class="star-rating-form mb-3">
+                            <input type="radio" id="star5" name="rating" value="5" checked /><label for="star5"><i class="bi bi-star-fill"></i></label>
+                            <input type="radio" id="star4" name="rating" value="4" /><label for="star4"><i class="bi bi-star-fill"></i></label>
+                            <input type="radio" id="star3" name="rating" value="3" /><label for="star3"><i class="bi bi-star-fill"></i></label>
+                            <input type="radio" id="star2" name="rating" value="2" /><label for="star2"><i class="bi bi-star-fill"></i></label>
+                            <input type="radio" id="star1" name="rating" value="1" /><label for="star1"><i class="bi bi-star-fill"></i></label>
+                        </div>
+                        <textarea name="text" class="form-control border-0 shadow-sm mb-3" rows="3" placeholder="Share your experience..." required></textarea>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold">Post Review</button>
+                    </form>
+                </div>
+            }
+
+            <div class="comments-list">
+                @foreach (var comment in Model.Comments.OrderByDescending(c => c.CreatedAt))
+                {
+                    <div class="card border-0 shadow-sm mb-3" style="border-radius: 12px;">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; font-weight: bold;">
+                                        @(comment.User?.Email?.Substring(0, 1).ToUpper() ?? "?")
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0 fw-bold">@comment.User?.Email?.Split('@')[0]</h6>
+                                        <small class="text-muted">@comment.CreatedAt.ToString("MMM dd, yyyy")</small>
+                                    </div>
+                                </div>
+                                <div class="text-warning">
+                                    @for (int i = 0; i < comment.Rating; i++)
+                                    {
+                                        <i class="bi bi-star-fill"></i>
+                                    }
+                                </div>
+                            </div>
+                            <p class="mt-2 mb-0">@comment.Text</p>
+                        </div>
+                    </div>
+                }
+            </div>
         </div>
 
         <div class="col-lg-4">
             <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 20px; background-color: #f8f9fa;">
-                <h5 class="fw-bold mb-3">Location Tracking</h5>
-                <div class="mb-3" style="height: 250px; border-radius: 15px; overflow: hidden;">
-                    @if (!string.IsNullOrEmpty(Model.MapUrl))
-                    {
-                        <iframe src="@Model.MapUrl" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
-                    }
-                </div>
-                <p class="mb-4 text-dark"><i class="bi bi-geo-alt-fill text-danger"></i> @Model.LocationName</p>
 
-                @if (hasJoined)
+                @if (hasJoined || User.IsInRole("Admin"))
                 {
-                    <button class="btn btn-secondary btn-lg w-100 fw-bold py-3 disabled mb-3" style="border-radius: 12px; cursor: not-allowed;">
-                        <i class="bi bi-check-lg me-2"></i> Already Joined
-                    </button>
+                    if (isCheckedIn)
+                    {
+                        <div class="alert alert-success text-center mb-3 fw-bold shadow-sm" style="border-radius: 12px;">
+                            <i class="bi bi-check-circle-fill fs-4 d-block mb-1"></i> You are Checked In!
+                        </div>
+                    }
+                    else if (isEventDay && !Model.IsCompleted && !User.IsInRole("Admin"))
+                    {
+                        <form asp-action="CheckIn" method="post" class="mb-3">
+                            <input type="hidden" name="eventId" value="@Model.Id" />
+                            <button type="submit" class="btn btn-warning btn-lg w-100 fw-bold animate-pulse shadow-sm" style="border-radius: 12px;">
+                                <i class="bi bi-geo-alt-fill me-1"></i> I'm Here - Check In!
+                            </button>
+                        </form>
+                    }
+                    else if (!User.IsInRole("Admin"))
+                    {
+                        <button class="btn btn-secondary btn-lg w-100 fw-bold py-3 disabled mb-3" style="border-radius: 12px;"><i class="bi bi-check-lg me-2"></i> Already Joined</button>
+                    }
 
-                    @* NEW: Enter Chat Room Button *@
-                    <a asp-action="EventChat" asp-route-id="@Model.Id" class="btn btn-success btn-lg w-100 fw-bold py-3 shadow-sm" style="border-radius: 12px;">
+                    <a asp-action="EventChat" asp-route-id="@Model.Id" class="btn btn-success btn-lg w-100 fw-bold py-3 shadow-sm mb-3" style="border-radius: 12px;">
                         <i class="bi bi-chat-text-fill me-2"></i> Open Community Chat
                     </a>
-                }
-                else
-                {
-                    <form asp-action="JoinEvent" method="post">
-                        <input type="hidden" name="eventId" value="@Model.Id" />
-                        <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold py-3" style="border-radius: 12px;">
-                            Join Event Now
+
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <button class="btn btn-dark btn-lg w-100 fw-bold py-3 shadow-sm mb-3" style="border-radius: 12px;" data-bs-toggle="modal" data-bs-target="#qrModal">
+                            <i class="bi bi-qr-code text-white me-2"></i> Generate Check-In QR
                         </button>
+                    }
+                }
+                else if (!Model.IsCompleted)
+                {
+                    <form asp-action="JoinEvent" method="post" class="mb-4">
+                        <input type="hidden" name="eventId" value="@Model.Id" />
+                        <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold py-3" style="border-radius: 12px;">Join Event Now</button>
                     </form>
+                }
+
+                <h5 class="fw-bold mb-2">Capacity</h5>
+                <div class="d-flex justify-content-between small text-muted mb-1">
+                    <span>@Model.Registrations.Count / @Model.MaxVolunteers</span>
+                    <span>@capacityPercentage% Full</span>
+                </div>
+                <div class="progress mb-3" style="height: 8px; border-radius: 10px;">
+                    <div class="progress-bar @pbColor progress-bar-striped progress-bar-animated" style="width: @capacityPercentage%"></div>
+                </div>
+
+                <div class="d-flex align-items-center mb-4">
+                    <div class="avatar-stack">
+                        @foreach (var reg in Model.Registrations.Take(5))
+                        {
+                            <div class="avatar" title="@reg.User?.Email">@(reg.User?.Email?.Substring(0, 1).ToUpper() ?? "?")</div>
+                        }
+                    </div>
+                    @if (Model.Registrations.Count > 5)
+                    {
+                        <small class="text-muted fw-bold ms-2">+@(Model.Registrations.Count - 5) more</small>
+                    }
+                </div>
+
+                <hr class="my-4" />
+                <h5 class="fw-bold mb-3"><i class="bi bi-list-check text-primary me-2"></i> Volunteer Tasks</h5>
+                <ul class="list-group mb-3 shadow-sm" style="border-radius: 10px;">
+                    @foreach (var task in Model.Tasks)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center bg-white border-0 border-bottom">
+                            <div class="small">
+                                @if (task.AssignedUserId != null)
+                                {
+                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                    <del class="text-muted">@task.Title</del>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-circle text-muted me-2"></i>
+                                    <span class="fw-bold">@task.Title</span>
+                                }
+                            </div>
+
+                            @if (task.AssignedUserId != null)
+                            {
+                                <div class="badge bg-primary rounded-pill" title="@task.AssignedUser?.Email">
+                                    @(task.AssignedUser?.Email?.Substring(0, 1).ToUpper() ?? "✓")
+                                </div>
+                            }
+                            else if (hasJoined && !Model.IsCompleted)
+                            {
+                                <form asp-action="ClaimTask" method="post" class="m-0">
+                                    <input type="hidden" name="taskId" value="@task.Id" /><input type="hidden" name="eventId" value="@Model.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-primary fw-bold" style="border-radius: 20px;">Claim</button>
+                                </form>
+                            }
+                        </li>
+                    }
+                </ul>
+
+                @if (User.IsInRole("Admin") && !Model.IsCompleted)
+                {
+                    <form asp-controller="Admin" asp-action="AddTask" method="post">
+                        <input type="hidden" name="eventId" value="@Model.Id" />
+                        <div class="input-group input-group-sm">
+                            <input type="text" name="title" class="form-control" placeholder="Add required task..." required />
+                            <button class="btn btn-primary" type="submit">Add</button>
+                        </div>
+                    </form>
+                }
+
+                <hr class="my-4" />
+
+                <h5 class="fw-bold mb-3">Location</h5>
+                <div id="eventMap" style="height: 200px; border-radius: 15px; overflow: hidden; background-color: #e9ecef;" class="mb-2"></div>
+                <p class="text-dark small"><i class="bi bi-geo-alt-fill text-danger"></i> @Model.LocationName</p>
+
+                <div class="d-flex justify-content-center gap-2 mt-4">
+                    <a href="https://twitter.com/intent/tweet?text=Join me for @Model.Title!&url=@Url.Action("Details", "Home", new { id = Model.Id }, Context.Request.Scheme)" target="_blank" class="btn btn-outline-dark btn-sm rounded-circle"><i class="bi bi-twitter-x"></i></a>
+                    <a href="https://www.facebook.com/sharer/sharer.php?u=@Url.Action("Details", "Home", new { id = Model.Id }, Context.Request.Scheme)" target="_blank" class="btn btn-outline-primary btn-sm rounded-circle"><i class="bi bi-facebook"></i></a>
+                </div>
+
+                <div class="mt-4 p-4 bg-white shadow-sm text-center" style="border-radius: 15px; border: 1px dashed #198754;">
+                    <h6 class="fw-bold text-success mb-2"><i class="bi bi-heart-fill me-1"></i> Support This Mission</h6>
+                    <p class="text-muted small mb-3">Can't attend? You can still make an impact by funding supplies and efforts for this cause.</p>
+                    <a asp-controller="Donation" asp-action="Index" asp-route-eventId="@Model.Id" class="btn btn-success fw-bold rounded-pill px-4 w-100 shadow-sm">
+                        <i class="bi bi-gift-fill me-2"></i>Donate Now
+                    </a>
+                </div>
+                @if (User.Identity.IsAuthenticated && !User.IsInRole("Admin"))
+                {
+                    <div class="text-center mt-4 border-top pt-3">
+                        <a href="#" class="text-muted text-decoration-none small" data-bs-toggle="modal" data-bs-target="#reportModal"><i class="bi bi-flag-fill me-1"></i> Report event</a>
+                    </div>
                 }
             </div>
         </div>
     </div>
 </div>
+
+@if (!User.IsInRole("Admin"))
+{
+    <div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content" style="border-radius: 15px;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-danger"><i class="bi bi-flag-fill me-2"></i> Report Issue</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form asp-action="SubmitReport" method="post">
+                    <div class="modal-body">
+                        <input type="hidden" name="targetId" value="@Model.Id" /><input type="hidden" name="targetType" value="Event" />
+                        <label class="fw-bold mb-2">Reason</label>
+                        <select name="reason" class="form-select" required>
+                            <option value="">Select a reason...</option>
+                            <option value="Inappropriate Content">Inappropriate Content</option>
+                            <option value="Fake Event">Fake Event</option>
+                            <option value="Safety Concern">Safety Concern</option>
+                        </select>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Submit Report</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@if (User.IsInRole("Admin"))
+{
+    <div class="modal fade" id="qrModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-phone text-success me-2"></i> Volunteer Check-In</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center pb-5">
+                    <p class="text-muted small mb-4">Ask volunteers to open the EcoTrace Scanner on their phones and point it at this screen.</p>
+
+                    <div id="qrcode" class="d-flex justify-content-center p-3 bg-white rounded-3 shadow-sm d-inline-block border"></div>
+
+                    <h4 class="fw-bold mt-4 text-success">@Model.Title</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script>
+    //  Map Initialization
+    @if (Model.Latitude.HasValue && Model.Longitude.HasValue)
+    {
+            <text>
+            document.addEventListener("DOMContentLoaded", function () {
+                var lat = @Model.Latitude.Value, lng = @Model.Longitude.Value;
+                var map = L.map('eventMap').setView([lat, lng], 15);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
+                L.marker([lat, lng]).addTo(map).bindPopup('<b>@Model.Title</b>').openPopup();
+            });
+            </text>
+    }
+
+    //  Countdown Timer
+    document.addEventListener("DOMContentLoaded", function () {
+        var timerElement = document.getElementById("countdownTimer");
+        if (timerElement) {
+            var eventDate = new Date(timerElement.getAttribute("data-date")).getTime();
+            setInterval(function() {
+                var now = new Date().getTime();
+                var dist = eventDate - now;
+                if (dist < 0) { timerElement.innerHTML = "Mission Started!"; return; }
+                var d = Math.floor(dist / 86400000), h = Math.floor((dist % 86400000) / 3600000), m = Math.floor((dist % 3600000) / 60000);
+                timerElement.innerHTML = d + "d " + h + "h " + m + "m remaining";
+            }, 1000);
+        }
+    });
+
+    // Generate the Admin QR Code
+    @if (User.IsInRole("Admin"))
+    {
+            <text>
+            document.addEventListener("DOMContentLoaded", function () {
+                var qrContainer = document.getElementById("qrcode");
+                if (qrContainer) {
+                    var checkInUrl = "@Url.Action("ProcessQRCheckIn", "Home", new { eventId = Model.Id }, Context.Request.Scheme)";
+                    new QRCode(qrContainer, {
+                        text: checkInUrl,
+                        width: 250,
+                        height: 250,
+                        colorDark : "#000000",
+                        colorLight : "#ffffff",
+                        correctLevel : QRCode.CorrectLevel.H
+                    });
+                }
+            });
+            </text>
+    }
+</script>

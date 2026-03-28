@@ -1,0 +1,72 @@
+﻿@model IEnumerable<EcoTraceApp.Models.Event>
+@{
+    ViewData["Title"] = "EcoTrace Analytics";
+}
+
+<div class="container mt-4 mb-5">
+    <h2 class="fw-bold mb-4"><i class="bi bi-graph-up-arrow text-primary"></i> Impact Analytics</h2>
+
+    <div class="row g-3 mb-5">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3 bg-primary text-white" style="border-radius: 15px;">
+                <small class="fw-bold text-uppercase opacity-75">Total Missions</small>
+                <h2 class="fw-bold mb-0">@ViewBag.TotalEvents</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3 bg-success text-white" style="border-radius: 15px;">
+                <small class="fw-bold text-uppercase opacity-75">Completed Missions</small>
+                <h2 class="fw-bold mb-0">@ViewBag.CompletedEvents</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3 bg-dark text-white" style="border-radius: 15px;">
+                <small class="fw-bold text-uppercase opacity-75">Total Volunteers</small>
+                <h2 class="fw-bold mb-0">@ViewBag.TotalVolunteers</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3 bg-warning text-dark" style="border-radius: 15px;">
+                <small class="fw-bold text-uppercase opacity-75">Check-In Rate</small>
+                <h2 class="fw-bold mb-0">@ViewBag.CheckInRate%</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm" style="border-radius: 20px;">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <h5 class="fw-bold"><i class="bi bi-star-fill text-warning me-2"></i> Highest Rated Missions</h5>
+                </div>
+                <div class="card-body px-4 pb-4">
+                    @foreach (var ev in Model)
+                    {
+                        var rating = ev.Comments.Any() ? ev.Comments.Average(c => c.Rating) : 0;
+                        <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded-3">
+                            <span class="fw-bold">@ev.Title</span>
+                            <span class="badge bg-warning text-dark">@rating.ToString("0.0") Stars</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm" style="border-radius: 20px;">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <h5 class="fw-bold"><i class="bi bi-person-check-fill text-primary me-2"></i> Top Volunteers</h5>
+                </div>
+                <div class="card-body px-4 pb-4">
+                    @foreach (var v in ViewBag.TopVolunteers)
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-2">
+                            <span class="text-muted">@v.Email</span>
+                            <span class="fw-bold text-success">@v.Count Missions</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

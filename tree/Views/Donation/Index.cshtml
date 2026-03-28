@@ -1,0 +1,42 @@
+﻿@{
+    ViewData["Title"] = "Support the Cause";
+}
+
+<div class="container mt-5 mb-5 d-flex justify-content-center">
+    <div class="card shadow-lg border-0" style="max-width: 500px; border-radius: 20px;">
+        <div class="card-header bg-success text-white text-center py-4" style="border-radius: 20px 20px 0 0;">
+            <i class="bi bi-heart-fill display-4 mb-2"></i>
+            <h3 class="fw-bold mb-0">Fuel the Movement</h3>
+        </div>
+        <div class="card-body p-5 text-center">
+            <p class="text-muted mb-4">Your contribution helps us organize more cleanups, plant more trees, and reward our top volunteers.</p>
+
+            <form asp-controller="Donation" asp-action="CreateCheckoutSession" method="post">
+                <input type="hidden" name="eventId" value="@ViewBag.EventId" />
+
+                <div class="btn-group w-100 mb-4" role="group">
+                    <input type="radio" class="btn-check" name="amount" id="btn10" value="10.00" checked>
+                    <label class="btn btn-outline-success fw-bold" for="btn10">$10</label>
+
+                    <input type="radio" class="btn-check" name="amount" id="btn25" value="25.00">
+                    <label class="btn btn-outline-success fw-bold" for="btn25">$25</label>
+
+                    <input type="radio" class="btn-check" name="amount" id="btn50" value="50.00">
+                    <label class="btn btn-outline-success fw-bold" for="btn50">$50</label>
+                </div>
+
+                <div class="input-group mb-4">
+                    <span class="input-group-text bg-light border-end-0 fw-bold">$</span>
+                    <input type="number" name="amount" class="form-control border-start-0" placeholder="Custom Amount" min="1" step="1">
+                </div>
+
+                <button type="submit" class="btn btn-dark w-100 btn-lg rounded-pill fw-bold shadow-sm">
+                    <i class="bi bi-lock-fill text-warning me-2"></i> Donate Securely via Stripe
+                </button>
+            </form>
+        </div>
+        <div class="card-footer bg-light text-center py-3" style="border-radius: 0 0 20px 20px;">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" alt="Powered by Stripe" height="25" class="opacity-75">
+        </div>
+    </div>
+</div>

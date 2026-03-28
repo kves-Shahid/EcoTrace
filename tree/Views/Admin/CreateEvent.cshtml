@@ -1,73 +1,147 @@
 ﻿@model EcoTraceApp.Models.Event
 @{
-    ViewData["Title"] = "Create Event";
+    ViewData["Title"] = "Create Mission";
 }
 
-<div class="container mt-4" style="max-width: 800px;">
-    <div class="card shadow-sm p-4">
-        <h2 class="mb-4">Create New Event</h2>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-        <form asp-action="CreateEvent" method="post" enctype="multipart/form-data">
-            <div class="row">
-                <div class="col-md-8 mb-3">
-                    <label class="form-label fw-bold">Event Title</label>
-                    <input asp-for="Title" class="form-control" placeholder="e.g. Biggest Tree Planting Fest" required />
+<div class="container mt-4 mb-5" style="max-width: 900px;">
+    <div class="card shadow border-0" style="border-radius: 20px;">
+        <div class="card-header bg-success text-white py-3" style="border-radius: 20px 20px 0 0;">
+            <h3 class="mb-0 fw-bold"><i class="bi bi-plus-circle-fill me-2"></i> Launch New Mission</h3>
+        </div>
+        <div class="card-body p-4 p-md-5">
+            <form asp-action="CreateEvent" method="post" enctype="multipart/form-data">
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-8">
+                        <label class="form-label fw-bold text-muted small uppercase">Mission Title</label>
+                        <input asp-for="Title" class="form-control border-0 bg-light shadow-sm" placeholder="e.g. Clean the Buriganga River" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold text-muted small uppercase">Category</label>
+                        <select asp-for="EventType" class="form-select border-0 bg-light shadow-sm">
+                            <option value="Tree Planting">Tree Planting</option>
+                            <option value="Waste Cleanup">Waste Cleanup</option>
+                            <option value="Wildlife Protection">Wildlife Protection</option>
+                            <option value="Eco Education">Eco Education</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label fw-bold">Event Type</label>
-                    <select asp-for="EventType" class="form-select">
-                        <option value="Tree Planting">Tree Planting</option>
-                        <option value="Social Welfare">Social Welfare</option>
-                        <option value="Volunteer Drive">Volunteer Drive</option>
-                    </select>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-muted small uppercase">Description</label>
+                    <textarea asp-for="Description" class="form-control border-0 bg-light shadow-sm" rows="4" placeholder="Detail the environmental impact and what volunteers should bring..."></textarea>
                 </div>
-            </div>
 
-            <div class="mb-3">
-                <label class="form-label fw-bold">Description</label>
-                <textarea asp-for="Description" class="form-control" rows="4" placeholder="Tell people about the cause..."></textarea>
-            </div>
-
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label class="form-label fw-bold">Date & Time</label>
-                    <input asp-for="EventDate" type="datetime-local" class="form-control" required />
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small uppercase">Date & Time</label>
+                        <input asp-for="EventDate" type="datetime-local" class="form-control border-0 bg-light shadow-sm" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small uppercase">Volunteer Capacity</label>
+                        <input asp-for="MaxVolunteers" type="number" class="form-control border-0 bg-light shadow-sm" />
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-bold">Max Volunteers</label>
-                    <input asp-for="MaxVolunteers" type="number" class="form-control" value="50" />
+
+                <hr class="my-4 opacity-25" />
+                <h5 class="fw-bold mb-3 text-success"><i class="bi bi-geo-alt-fill"></i> Deployment Location</h5>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small uppercase">Venue Name</label>
+                    <input asp-for="LocationName" class="form-control border-0 bg-light shadow-sm" placeholder="e.g. Ramna Park Entrance" />
                 </div>
-            </div>
 
-            <div class="mb-3">
-                <label class="form-label fw-bold">Location Name</label>
-                <input asp-for="LocationName" class="form-control" placeholder="e.g. Westin, Dhaka" />
-            </div>
-
-            <hr />
-            <h5 class="mb-3">Media & Map Options</h5>
-
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-bold">Upload Image/Poster</label>
-                    <input type="file" name="mediaFile" class="form-control" accept="image/*" />
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small">Latitude</label>
+                        <input asp-for="Latitude" id="latInput" type="number" step="any" class="form-control border-0 bg-light shadow-sm" readonly />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small">Longitude</label>
+                        <input asp-for="Longitude" id="lngInput" type="number" step="any" class="form-control border-0 bg-light shadow-sm" readonly />
+                    </div>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-bold">Video URL (YouTube/Vimeo)</label>
-                    <input asp-for="VideoUrl" class="form-control" placeholder="https://youtube.com/..." />
+
+                <div id="selectionMap" class="rounded-4 shadow-sm mb-2" style="height: 350px; width: 100%; border: 2px solid #e9ecef;"></div>
+                <p class="text-muted small mb-4"><i class="bi bi-info-circle"></i> Click anywhere on the map to set the mission coordinates.</p>
+
+                <hr class="my-4 opacity-25" />
+                <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-camera-reels-fill"></i> Media Assets</h5>
+
+                <div class="row g-3 mb-5">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small uppercase">Upload Poster</label>
+                        <input type="file" name="mediaFile" class="form-control border-0 bg-light shadow-sm" accept="image/*" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small uppercase">YouTube Briefing (URL)</label>
+                        <input asp-for="VideoUrl" class="form-control border-0 bg-light shadow-sm" placeholder="https://youtube.com/watch?v=..." />
+                    </div>
                 </div>
-            </div>
 
-            <div class="mb-4">
-                <label class="form-label fw-bold">Map Embed Link (Iframe URL)</label>
-                <input asp-for="MapUrl" class="form-control" placeholder="Paste Google Maps Embed URL here" />
-                <small class="text-muted">Users will use this to track the event location.</small>
-            </div>
-
-            <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-primary btn-lg">Publish Event</button>
-                <a asp-action="Dashboard" class="btn btn-light">Cancel</a>
-            </div>
-        </form>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a asp-action="Dashboard" class="btn btn-light rounded-pill px-4 fw-bold">Cancel</a>
+                    <button type="submit" class="btn btn-success rounded-pill px-5 fw-bold shadow">Publish Mission</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        
+        var defaultLat = 23.8103;
+        var defaultLng = 90.4125;
+
+        
+        var map = L.map('selectionMap').setView([defaultLat, defaultLng], 10);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        
+        var ecoIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
+        
+        var marker;
+
+        function updateInputs(lat, lng) {
+            document.getElementById('latInput').value = lat.toFixed(6);
+            document.getElementById('lngInput').value = lng.toFixed(6);
+        }
+
+        map.on('click', function(e) {
+            var lat = e.latlng.lat;
+            var lng = e.latlng.lng;
+
+            if (marker) {
+                marker.setLatLng(e.latlng);
+            } else {
+                marker = L.marker(e.latlng, { icon: ecoIcon, draggable: true }).addTo(map);
+                marker.on('dragend', function(event) {
+                    var m = event.target;
+                    updateInputs(m.getLatLng().lat, m.getLatLng().lng);
+                });
+            }
+            updateInputs(lat, lng);
+        });
+
+        
+        map.locate({setView: true, maxZoom: 13});
+        map.on('locationfound', function(e) {
+           
+        });
+    </script>
+}
